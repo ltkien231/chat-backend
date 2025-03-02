@@ -1,0 +1,6 @@
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(200) UNIQUE,
+  password VARCHAR(200) UNIQUE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
