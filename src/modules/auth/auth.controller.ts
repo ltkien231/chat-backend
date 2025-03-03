@@ -5,10 +5,15 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './local-auth.guard';
 
 @Controller('auth')
-@UseGuards(LocalAuthGuard)
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Post('signup')
+  async signup(@Request() req) {
+    return this.authService.login(req.user);
+  }
+
+  @UseGuards(LocalAuthGuard)
   @Post('login')
   async login(@Request() req) {
     console.log('req.user', req.user);
