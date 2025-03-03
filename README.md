@@ -2,4 +2,4 @@
 
 login flow:
 
-- local.strategy:validate() -> authService:validateUser() - attach user info to req
+- local.strategy:validate() -> authService:validateUser() - attach user info to req -> auth.controller:login() -> auth.service:login(): return jwt

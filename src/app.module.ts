@@ -10,10 +10,6 @@ import { loadConfig } from './config/';
 import { AuthMiddleware } from './middlewares/auth.middleware';
 import { ConfigService } from '@nestjs/config';
 import { DbConfig } from './types';
-import { UserController } from './modules/user/user.controller';
-import { UserService } from './modules/user/user.service';
-import { AuthService } from './modules/auth/auth.service';
-import { AuthController } from './modules/auth/auth.controller';
 import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
@@ -38,7 +34,7 @@ import { AuthModule } from './modules/auth/auth.module';
           database: db.dbName,
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           // synchronize: true,
-          // logging: true,
+          logging: true,
         };
       },
       inject: [ConfigService],
@@ -47,8 +43,8 @@ import { AuthModule } from './modules/auth/auth.module';
     UserModule,
     ChatModule,
   ],
-  controllers: [AppController, UserController, AuthController],
-  providers: [AppService, UserService, AuthService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

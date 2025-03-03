@@ -10,12 +10,19 @@ export class UserService {
     private readonly repo: Repository<UserEntity>,
   ) {}
 
-  async create(user: UserEntity): Promise<UserEntity> {
-    await this.repo.save(user);
-    return user;
+  async create(user: Partial<UserEntity>): Promise<UserEntity> {
+    return this.repo.save(user);
   }
 
-  async findOne(username: string): Promise<UserEntity | undefined> {
+  async findOneByUsername(username: string): Promise<UserEntity | undefined> {
     return this.repo.findOneBy({ username });
+  }
+
+  async findOneByEmail(email: string): Promise<UserEntity | undefined> {
+    return this.repo.findOneBy({ email });
+  }
+
+  async findOneById(id: number): Promise<UserEntity | undefined> {
+    return this.repo.findOneBy({ id });
   }
 }
