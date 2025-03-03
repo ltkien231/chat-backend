@@ -6,4 +6,5 @@ export const loadConfig = () => ({
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
   },
+  jwtSecret: process.env.JWT_SECRET,
 });

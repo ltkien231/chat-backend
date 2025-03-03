@@ -5,10 +5,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './modules/user/user.module';
+import { ChatModule } from './modules/chat/chat.module';
 import { loadConfig } from './config/';
 import { AuthMiddleware } from './middlewares/auth.middleware';
 import { ConfigService } from '@nestjs/config';
 import { DbConfig } from './types';
+import { UserController } from './modules/user/user.controller';
+import { UserService } from './modules/user/user.service';
+import { AuthService } from './modules/auth/auth.service';
+import { AuthController } from './modules/auth/auth.controller';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -37,10 +43,12 @@ import { DbConfig } from './types';
       },
       inject: [ConfigService],
     }),
+    AuthModule,
     UserModule,
+    ChatModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, UserController, AuthController],
+  providers: [AppService, UserService, AuthService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
