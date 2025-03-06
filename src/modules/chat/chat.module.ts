@@ -15,5 +15,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
   ],
   providers: [ChatGateway],
+  exports: [ChatGateway],
 })
 export class ChatModule {}

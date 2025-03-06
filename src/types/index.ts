@@ -5,3 +5,9 @@ export interface DbConfig {
   username: string;
   password: string;
 }
+
+export interface SocketClient {
+  userId: number;
+  username: string;
+  clientId: string;
+}

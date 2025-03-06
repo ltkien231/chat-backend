@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './modules/user/user.module';
+import { FriendModule } from './modules/friend/friend.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { loadConfig } from './config/';
 import { AuthMiddleware } from './middlewares/auth.middleware';
@@ -41,6 +42,7 @@ import { AuthModule } from './modules/auth/auth.module';
     }),
     AuthModule,
     UserModule,
+    FriendModule,
     ChatModule,
   ],
   controllers: [AppController],

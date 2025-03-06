@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real-Time Chat</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  </head>
+  <body>
+    <input id="userId" type="text" placeholder="User ID" />
+    <input id="message" type="text" placeholder="Message" />
+    <button onclick="sendMessage()">Send</button>
+    <ul id="messages"></ul>
+
+    <script>
+      const socket = io('http://localhost:8080', {
+        auth: {
+          token:
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRhbSIsInN1YiI6NiwiaWF0IjoxNzQxMjQ1MDk1LCJleHAiOjE3NDY0MjkwOTV9.lu33-NfwW-aFPwIz9vpiFqkN9Az_PnnWsPLhypJK5so',
+        },
+      });
+
+      socket.on('open', (message) => {
+        console.log('open', message);
+      });
+
+      socket.on('message', (message) => {
+        const messages = document.getElementById('messages');
+        const li = document.createElement('li');
+        li.textContent = `${message.user.name}: ${message.content}`;
+        messages.appendChild(li);
+      });
+
+      function sendMessage() {
+        const userId = document.getElementById('userId').value;
+        const content = document.getElementById('message').value;
+        socket.emit('identity', { content, userId });
+      }
+    </script>
+  </body>
+</html>
