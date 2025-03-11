@@ -14,6 +14,7 @@ import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Server, Socket } from 'socket.io';
 import { SocketClient } from 'src/types';
+import { ChatService } from './chat.service';
 
 @WebSocketGateway({
   cors: {
@@ -26,7 +27,10 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   private clients: SocketClient[] = [];
 
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly chatService: ChatService,
+  ) {}
 
   afterInit() {
     console.log('Websocket Server Initialized');
@@ -39,13 +43,15 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       const token = client.handshake.auth.token; // Get token from client
 
       const payload = this.jwtService.verify(token);
-
-      client.data.user = payload; // Store user data in socket
+      client.data.user = {
+        userId: payload.sub,
+        username: payload.username,
+      };
 
       console.log('User authenticated Websocket:', payload, client.id);
       console.debug(`Number of connected clients: ${sockets.size}`);
       this.clients.push({
-        userId: payload.id,
+        userId: payload.sub,
         username: payload.username,
         clientId: client.id,
       });
@@ -55,8 +61,9 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
   }
 
-  handleDisconnect(client: any) {
-    console.log(`Cliend id:${client.id} disconnected`);
+  handleDisconnect(client: Socket) {
+    console.log('Client disconnected:', client.id);
+    this.clients = this.clients.filter((c) => c.clientId !== client.id);
   }
 
   /*==================================================================
@@ -70,10 +77,15 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     return from([1, 2, 3]).pipe(map((item) => ({ event: 'events', data: item })));
   }
 
-  @SubscribeMessage('identity')
+  @SubscribeMessage('directMessage')
   identity(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
-    console.log('identity', data);
-    client.broadcast.emit('message', {
+    const isFriend = this.chatService.isFriend(data.user.userId, data.userTo);
+    if (!isFriend) {
+      return;
+    }
+
+    console.log('directMessage', data);
+    client.broadcast.emit('directMessage', {
       content: data.content,
       user: { id: data.userId, name: client.data.user.username },
     });
