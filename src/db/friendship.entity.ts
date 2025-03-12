@@ -20,6 +20,6 @@ export class FriendRequestEntity {
   status: 'pending' | 'accepted' | 'rejected';
 
   @ApiProperty({ example: '2021-01-01', description: 'The creation date of the request' })
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  created_at: Date;
+  @Column({ name: 'created_at' })
+  createdAt: Date;
 }

@@ -40,7 +40,6 @@ export class AuthService {
     const newUser: Partial<UserEntity> = {
       ...user,
       password: hashedPassword,
-      created_at: new Date(),
     };
 
     const createdUser = await this.usersService.create(newUser as UserEntity);
