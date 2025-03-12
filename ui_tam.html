@@ -24,17 +24,17 @@
         console.log('open', message);
       });
 
-      socket.on('message', (message) => {
+      socket.on('directMessage', (message) => {
         const messages = document.getElementById('messages');
         const li = document.createElement('li');
-        li.textContent = `${message.user.name}: ${message.content}`;
+        li.textContent = `${message.fromUser}: ${message.content}`;
         messages.appendChild(li);
       });
 
       function sendMessage() {
         const userId = document.getElementById('userId').value;
         const content = document.getElementById('message').value;
-        socket.emit('identity', { content, userId });
+        socket.emit('directMessage', { content, toUser: userId });
       }
     </script>
   </body>

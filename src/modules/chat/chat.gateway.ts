@@ -78,17 +78,34 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   @SubscribeMessage('directMessage')
-  identity(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
-    const isFriend = this.chatService.isFriend(data.user.userId, data.userTo);
-    if (!isFriend) {
-      return;
+  async identity(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
+    console.log('directMessage', data);
+    const toClient = this.clients.find((client) => client.username === data.toUser);
+    if (!toClient) {
+      // TODO: toUser offline, should send notification to toUser
+      console.log('toUser offline');
+      return data;
     }
 
-    console.log('directMessage', data);
-    client.broadcast.emit('directMessage', {
+    const isFriend = await this.chatService.isFriend(client.data.user.userId, toClient.userId);
+    if (!isFriend) {
+      console.log('users not friend');
+      client.emit('response', {
+        msg_topic: 'directMessage',
+        msg_type: 'error',
+        msg: {
+          error_type: 'not_friend',
+          error_msg: 'You are not friends with this user',
+        },
+      });
+      return data;
+    }
+
+    this.server.to(toClient.clientId).emit('directMessage', {
       content: data.content,
-      user: { id: data.userId, name: client.data.user.username },
+      fromUser: client.data.user.username,
     });
+
     return data;
   }
 
