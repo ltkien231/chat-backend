@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { FriendRequestEntity } from 'src/db/friendship.entity';
+import { FriendRequestEntity } from '../../db/friendship.entity';
 
 @Injectable()
 export class ChatService {

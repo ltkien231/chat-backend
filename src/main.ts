@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { RedisSocketIoAdapter } from './adapters/redis-io.adapter';
+import { RedisIoAdapter } from './adapters/redis-io.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -11,8 +11,12 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
-  const redisIoAdapter = new RedisSocketIoAdapter(app);
+  const configService = app.get(ConfigService);
+
+  // Initialize Redis adapter
+  const redisIoAdapter = new RedisIoAdapter(configService);
   await redisIoAdapter.connectToRedis();
+
   app.useWebSocketAdapter(redisIoAdapter);
 
   const config = new DocumentBuilder()
@@ -24,9 +28,8 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('swagger', app, documentFactory);
 
-  const configService: ConfigService = app.get<ConfigService>(ConfigService);
-  const port = configService.get('PORT');
+  const port = configService.get('PORT') || 8080;
   await app.listen(port);
-  console.log('App started on port', port);
+  console.log(`Application is running port ${port}`);
 }
 bootstrap();

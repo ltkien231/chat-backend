@@ -1,10 +1,10 @@
 import { Body, Controller, Post, Get, Request, UseGuards } from '@nestjs/common';
 import { FriendService } from './friend.service';
-import { AcceptFriendRequestDto, FriendRequestDto } from 'src/dto/friend.dto';
+import { AcceptFriendRequestDto, FriendRequestDto } from '../../dto/friend.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ApiResponse } from '@nestjs/swagger';
 import { ApiOperation } from '@nestjs/swagger';
-import { FriendRequestEntity } from 'src/db/friendship.entity';
+import { FriendRequestEntity } from '../../db/friendship.entity';
 
 @Controller('friends')
 @UseGuards(JwtAuthGuard)

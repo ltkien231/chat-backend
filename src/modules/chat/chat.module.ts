@@ -5,8 +5,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from '../user/user.module';
 import { FriendModule } from '../friend/friend.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { FriendRequestEntity } from 'src/db/friendship.entity';
+import { FriendRequestEntity } from '../../db/friendship.entity';
 import { ChatService } from './chat.service';
+import { RedisIoAdapter } from '../../adapters/redis-io.adapter';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { ChatService } from './chat.service';
     UserModule,
     forwardRef(() => FriendModule),
   ],
-  providers: [ChatGateway, ChatService],
+  providers: [ChatGateway, ChatService, RedisIoAdapter],
   exports: [ChatGateway],
 })
 export class ChatModule {}

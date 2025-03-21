@@ -13,7 +13,7 @@ import { JwtService } from '@nestjs/jwt';
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Server, Socket } from 'socket.io';
-import { SocketClient } from 'src/types';
+import { SocketClient } from '../../types';
 import { ChatService } from './chat.service';
 
 @WebSocketGateway({
@@ -78,7 +78,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   @SubscribeMessage('directMessage')
-  async identity(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
+  async handleDirectMessage(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
     console.log('directMessage', data);
     const toClient = this.clients.find((client) => client.username === data.toUser);
     if (!toClient) {
@@ -110,18 +110,15 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   /*==================================================================
-                          SOCKET EVENTS
+                          FRIEND REQUEST
   ==================================================================*/
 
-  sendFriendRequest(from_username: string, to_username: string) {
-    const toClient = this.clients.find((client) => client.username === to_username);
+  sendFriendRequest(fromUsername: string, toUsername: string) {
+    const toClient = this.clients.find((client) => client.username === toUsername);
     if (toClient) {
-      // this.server.to(toClient.clientId).emit('friendRequest', {
-      //   from_username,
-      // });
-      this.server.to(toClient.clientId).emit('message', {
-        content: `${from_username} sent you a friend request`,
-        user: { id: from_username, name: from_username },
+      this.server.to(toClient.clientId).emit('friendRequest', {
+        content: `${fromUsername} sent you a friend request`,
+        fromUser: { id: fromUsername, name: fromUsername },
       });
     }
   }
