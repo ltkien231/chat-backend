@@ -71,4 +71,6 @@ jobs:
           app-name: 'Chatchick'
           slot-name: 'Production'
           package: .
-          
+        
+      - name: Delete artifact file
+        run: rm release.zip

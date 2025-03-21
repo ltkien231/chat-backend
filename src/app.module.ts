@@ -26,6 +26,7 @@ import { AuthModule } from './modules/auth/auth.module';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const db = configService.get<DbConfig>('database');
+        const env = configService.get('env');
         return {
           type: 'mysql',
           host: db.host,
@@ -35,7 +36,8 @@ import { AuthModule } from './modules/auth/auth.module';
           database: db.dbName,
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           // synchronize: true,
-          logging: true,
+          ssl: env !== 'production' ? { secureProtocol: 'TLSv1_3_method' } : undefined,
+          logging: env !== 'production',
         };
       },
       inject: [ConfigService],
