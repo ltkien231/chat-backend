@@ -36,7 +36,7 @@ import { AuthModule } from './modules/auth/auth.module';
           database: db.dbName,
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           // synchronize: true,
-          ssl: env !== 'production' ? { secureProtocol: 'TLSv1_3_method' } : undefined,
+          ssl: env === 'production' ? { secureProtocol: 'TLSv1_3_method' } : undefined,
           logging: env !== 'production',
         };
       },
