@@ -16,7 +16,7 @@
       const socket = io('http://localhost:8080', {
         auth: {
           token:
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImtpZW4iLCJzdWIiOjQsImlhdCI6MTc0MTIzNTk4NiwiZXhwIjoxNzQ2NDE5OTg2fQ.qxVa-vVMgeINigi819AYkxmNImZg3ZPD7cBkSTDkazw', // Send JWT in auth object
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImtpZW4iLCJzdWIiOjIsImlhdCI6MTc0MTc5MjQ5OCwiZXhwIjoxNzQ2OTc2NDk4fQ.JniBWWWmA2wDxOgOYFDwlZREzg6HCkLxhbv9r9QPS4A', // Send JWT in auth object
         },
       });
 
@@ -27,14 +27,14 @@
       socket.on('directMessage', (message) => {
         const messages = document.getElementById('messages');
         const li = document.createElement('li');
-        li.textContent = `${message.user.name}: ${message.content}`;
+        li.textContent = `${message.fromUser}: ${message.content}`;
         messages.appendChild(li);
       });
 
       function sendMessage() {
         const userId = document.getElementById('userId').value;
         const content = document.getElementById('message').value;
-        socket.emit('directMessage', { content, userId });
+        socket.emit('directMessage', { content, toUser: userId });
       }
     </script>
   </body>

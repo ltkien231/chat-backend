@@ -1,8 +1,8 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { UserEntity } from 'src/db/user.entity';
-import { CreateUserDto } from 'src/dto/user.dto';
+import { UserEntity } from '../../db/user.entity';
+import { CreateUserDto } from '../../dto/user.dto';
 import { UserService } from '../user/user.service';
 
 @Injectable()
@@ -40,7 +40,6 @@ export class AuthService {
     const newUser: Partial<UserEntity> = {
       ...user,
       password: hashedPassword,
-      created_at: new Date(),
     };
 
     const createdUser = await this.usersService.create(newUser as UserEntity);

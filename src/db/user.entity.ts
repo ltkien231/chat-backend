@@ -11,6 +11,14 @@ export class UserEntity {
   @Column()
   username: string;
 
+  @ApiProperty({ example: 'John', description: 'The first name of the user' })
+  @Column({ name: 'first_name' })
+  firstName: string;
+
+  @ApiProperty({ example: 'Doe', description: 'The last name of the user' })
+  @Column({ name: 'last_name' })
+  lastName: string;
+
   @Column()
   password: string;
 
@@ -19,6 +27,6 @@ export class UserEntity {
   email: string;
 
   @ApiProperty({ example: '2021-01-01', description: 'The creation date of the user' })
-  @Column()
-  created_at: Date;
+  @Column({ name: 'created_at' })
+  createdAt: Date;
 }

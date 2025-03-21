@@ -13,7 +13,7 @@ import { JwtService } from '@nestjs/jwt';
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Server, Socket } from 'socket.io';
-import { SocketClient } from 'src/types';
+import { SocketClient } from '../../types';
 import { ChatService } from './chat.service';
 
 @WebSocketGateway({
@@ -78,33 +78,47 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   @SubscribeMessage('directMessage')
-  identity(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
-    const isFriend = this.chatService.isFriend(data.user.userId, data.userTo);
-    if (!isFriend) {
-      return;
+  async handleDirectMessage(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
+    console.log('directMessage', data);
+    const toClient = this.clients.find((client) => client.username === data.toUser);
+    if (!toClient) {
+      // TODO: toUser offline, should send notification to toUser
+      console.log('toUser offline');
+      return data;
     }
 
-    console.log('directMessage', data);
-    client.broadcast.emit('directMessage', {
+    const isFriend = await this.chatService.isFriend(client.data.user.userId, toClient.userId);
+    if (!isFriend) {
+      console.log('users not friend');
+      client.emit('response', {
+        msg_topic: 'directMessage',
+        msg_type: 'error',
+        msg: {
+          error_type: 'not_friend',
+          error_msg: 'You are not friends with this user',
+        },
+      });
+      return data;
+    }
+
+    this.server.to(toClient.clientId).emit('directMessage', {
       content: data.content,
-      user: { id: data.userId, name: client.data.user.username },
+      fromUser: client.data.user.username,
     });
+
     return data;
   }
 
   /*==================================================================
-                          SOCKET EVENTS
+                          FRIEND REQUEST
   ==================================================================*/
 
-  sendFriendRequest(from_username: string, to_username: string) {
-    const toClient = this.clients.find((client) => client.username === to_username);
+  sendFriendRequest(fromUsername: string, toUsername: string) {
+    const toClient = this.clients.find((client) => client.username === toUsername);
     if (toClient) {
-      // this.server.to(toClient.clientId).emit('friendRequest', {
-      //   from_username,
-      // });
-      this.server.to(toClient.clientId).emit('message', {
-        content: `${from_username} sent you a friend request`,
-        user: { id: from_username, name: from_username },
+      this.server.to(toClient.clientId).emit('friendRequest', {
+        content: `${fromUsername} sent you a friend request`,
+        fromUser: { id: fromUsername, name: fromUsername },
       });
     }
   }

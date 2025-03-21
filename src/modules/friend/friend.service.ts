@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ChatGateway } from '../chat/chat.gateway';
-import { FriendRequestEntity } from 'src/db/friendship.entity';
+import { FriendRequestEntity } from '../../db/friendship.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 

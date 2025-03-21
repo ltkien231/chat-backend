@@ -27,7 +27,7 @@ import { AuthModule } from './modules/auth/auth.module';
       useFactory: (configService: ConfigService) => {
         const db = configService.get<DbConfig>('database');
         return {
-          type: 'postgres',
+          type: 'mysql',
           host: db.host,
           port: db.port,
           username: db.username,
