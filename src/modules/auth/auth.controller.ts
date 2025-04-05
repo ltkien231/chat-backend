@@ -29,7 +29,7 @@ export class AuthController {
     type: LoginUserDto,
   })
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async login(@Request() req, body: LoginUserDto) {
+  async login(@Request() req, @Body() body: LoginUserDto) {
     return this.authService.login(req.user);
   }
 
