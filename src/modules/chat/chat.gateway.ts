@@ -7,11 +7,8 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  WsResponse,
 } from '@nestjs/websockets';
 import { JwtService } from '@nestjs/jwt';
-import { from, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { Server, Socket } from 'socket.io';
 import { SocketClient } from '../../types';
 import { ChatService } from './chat.service';
@@ -69,13 +66,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   /*==================================================================
                           SOCKET EVENTS
   ==================================================================*/
-
-  @SubscribeMessage('events')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  findAll(@MessageBody() data: any): Observable<WsResponse<number>> {
-    console.log('events', data);
-    return from([1, 2, 3]).pipe(map((item) => ({ event: 'events', data: item })));
-  }
 
   @SubscribeMessage('directMessage')
   async handleDirectMessage(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
