@@ -16,7 +16,13 @@ import { ChatService } from './chat.service';
 @WebSocketGateway({
   cors: {
     origin: '*',
+    methods: ['GET', 'POST'],
+    credentials: true,
   },
+  path: '/socket.io/',
+  serveClient: false,
+  transports: ['polling', 'websocket'],
+  namespace: '/',
 })
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -30,30 +36,53 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ) {}
 
   afterInit() {
-    console.log('Websocket Server Initialized');
+    console.log('WebSocket Server Initialized');
+    console.log('WebSocket Gateway path:', '/socket.io/');
   }
 
   async handleConnection(client: Socket) {
     const { sockets } = this.server.sockets;
+    console.log('Connected clients:', sockets);
+    console.log('New client connection attempt', client.id);
+    console.log('Auth data received:', client.handshake.auth);
 
     try {
       const token = client.handshake.auth.token; // Get token from client
 
-      const payload = this.jwtService.verify(token);
-      client.data.user = {
-        userId: payload.sub,
-        username: payload.username,
-      };
+      if (!token) {
+        console.error('No token provided for client:', client.id);
+        client.disconnect();
+        return;
+      }
 
-      console.log('User authenticated Websocket:', payload, client.id);
-      console.debug(`Number of connected clients: ${sockets.size}`);
-      this.clients.push({
-        userId: payload.sub,
-        username: payload.username,
-        clientId: client.id,
-      });
+      try {
+        const payload = this.jwtService.verify(token);
+        client.data.user = {
+          userId: payload.sub,
+          username: payload.username,
+        };
+
+        console.log('User authenticated Websocket:', payload, client.id);
+        console.log(`Number of connected clients: ${sockets.size}`);
+        this.clients.push({
+          userId: payload.sub,
+          username: payload.username,
+          clientId: client.id,
+        });
+
+        // Send confirmation to client
+        client.emit('connectionConfirmed', {
+          status: 'connected',
+          userId: payload.sub,
+          username: payload.username,
+        });
+      } catch (jwtError) {
+        console.error('JWT verification failed:', jwtError.message);
+        client.disconnect();
+        return;
+      }
     } catch (error) {
-      console.debug('Websocket connection error:', error.message);
+      console.error('Websocket connection error:', error.message, error.stack);
       client.disconnect();
     }
   }
@@ -61,6 +90,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   handleDisconnect(client: Socket) {
     console.log('Client disconnected:', client.id);
     this.clients = this.clients.filter((c) => c.clientId !== client.id);
+    console.log(`Remaining connected clients: ${this.clients.length}`);
   }
 
   /*==================================================================
@@ -69,17 +99,40 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   @SubscribeMessage('directMessage')
   async handleDirectMessage(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
-    console.log('directMessage', data);
-    const toClient = this.clients.find((client) => client.username === data.toUser);
+    console.log('Received directMessage event:', data);
+    console.log('From client:', client.id, 'User:', client.data?.user);
+
+    // Check if user data is available
+    if (!client.data?.user) {
+      console.error('No user data found for client:', client.id);
+      client.emit('response', {
+        msg_topic: 'directMessage',
+        msg_type: 'error',
+        msg: {
+          error_type: 'authentication',
+          error_msg: 'User not authenticated',
+        },
+      });
+      return;
+    }
+
+    const toClient = this.clients.find((c) => c.username === data.toUser);
     if (!toClient) {
-      // TODO: toUser offline, should send notification to toUser
-      console.log('toUser offline');
+      console.log(`Target user '${data.toUser}' is offline or not found`);
+      client.emit('response', {
+        msg_topic: 'directMessage',
+        msg_type: 'error',
+        msg: {
+          error_type: 'user_offline',
+          error_msg: 'User is offline or not found',
+        },
+      });
       return data;
     }
 
     const isFriend = await this.chatService.isFriend(client.data.user.userId, toClient.userId);
     if (!isFriend) {
-      console.log('users not friend');
+      console.log(`Users not friends: ${client.data.user.username} and ${data.toUser}`);
       client.emit('response', {
         msg_topic: 'directMessage',
         msg_type: 'error',
@@ -91,9 +144,17 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       return data;
     }
 
+    console.log(`Sending message to ${toClient.username} (${toClient.clientId})`);
     this.server.to(toClient.clientId).emit('directMessage', {
       content: data.content,
       fromUser: client.data.user.username,
+    });
+
+    // Confirm message was sent
+    client.emit('messageSent', {
+      status: 'success',
+      to: data.toUser,
+      content: data.content,
     });
 
     return data;

@@ -13,11 +13,18 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
-  // Initialize Redis adapter
-  const redisIoAdapter = new RedisIoAdapter(configService);
+  // Initialize Redis adapter with app instance
+  const redisIoAdapter = new RedisIoAdapter(app, configService);
   await redisIoAdapter.connectToRedis();
 
   app.useWebSocketAdapter(redisIoAdapter);
+
+  // Setup CORS for REST endpoints
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Online Chat API')
@@ -30,6 +37,7 @@ async function bootstrap() {
 
   const port = configService.get('PORT') || 8080;
   await app.listen(port);
-  console.log(`Application is running port: ${port}`);
+  console.log(`Application is running on port ${port}`);
+  console.log(`Socket.IO server available at http://localhost:${port}/socket.io/`);
 }
 bootstrap();
