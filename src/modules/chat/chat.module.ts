@@ -6,12 +6,13 @@ import { UserModule } from '../user/user.module';
 import { FriendModule } from '../friend/friend.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FriendRequestEntity } from '../../db/friendship.entity';
+import { UserEntity } from '../../db/user.entity';
 import { ChatService } from './chat.service';
 import { RedisIoAdapter } from '../../adapters/redis-io.adapter';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FriendRequestEntity]),
+    TypeOrmModule.forFeature([FriendRequestEntity, UserEntity]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

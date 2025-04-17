@@ -41,8 +41,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   async handleConnection(client: Socket) {
-    const { sockets } = this.server.sockets;
-    console.log('Connected clients:', sockets);
+    // const sockets = this.server.sockets.sockets;
     console.log('New client connection attempt', client.id);
     console.log('Auth data received:', client.handshake.auth);
 
@@ -63,7 +62,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         };
 
         console.log('User authenticated Websocket:', payload, client.id);
-        console.log(`Number of connected clients: ${sockets.size}`);
+        // TODO: check why undefined
+        // console.log(`Number of connected clients: ${sockets.size}`);
         this.clients.push({
           userId: payload.sub,
           username: payload.username,
@@ -116,6 +116,20 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       return;
     }
 
+    const isFriend = await this.chatService.isFriend(client.data.user.userId, data.toUser);
+    if (!isFriend) {
+      console.log(`Users not friends: ${client.data.user.username} and ${data.toUser}`);
+      client.emit('response', {
+        msg_topic: 'directMessage',
+        msg_type: 'error',
+        msg: {
+          error_type: 'not_friend',
+          error_msg: 'You are not friends with this user',
+        },
+      });
+      return data;
+    }
+
     const toClient = this.clients.find((c) => c.username === data.toUser);
     if (!toClient) {
       console.log(`Target user '${data.toUser}' is offline or not found`);
@@ -125,20 +139,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         msg: {
           error_type: 'user_offline',
           error_msg: 'User is offline or not found',
-        },
-      });
-      return data;
-    }
-
-    const isFriend = await this.chatService.isFriend(client.data.user.userId, toClient.userId);
-    if (!isFriend) {
-      console.log(`Users not friends: ${client.data.user.username} and ${data.toUser}`);
-      client.emit('response', {
-        msg_topic: 'directMessage',
-        msg_type: 'error',
-        msg: {
-          error_type: 'not_friend',
-          error_msg: 'You are not friends with this user',
         },
       });
       return data;
