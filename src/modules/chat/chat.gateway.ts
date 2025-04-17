@@ -57,7 +57,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       try {
         const payload = this.jwtService.verify(token);
         client.data.user = {
-          userId: payload.sub,
+          userId: payload.id,
           username: payload.username,
         };
 
@@ -65,7 +65,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         // TODO: check why undefined
         // console.log(`Number of connected clients: ${sockets.size}`);
         this.clients.push({
-          userId: payload.sub,
+          userId: payload.id,
           username: payload.username,
           clientId: client.id,
         });
@@ -73,7 +73,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         // Send confirmation to client
         client.emit('connectionConfirmed', {
           status: 'connected',
-          userId: payload.sub,
+          userId: payload.id,
           username: payload.username,
         });
       } catch (jwtError) {

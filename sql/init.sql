@@ -8,7 +8,6 @@ CREATE TABLE users (
   created_at TIMESTAMP DEFAULT NOW(),
   PRIMARY KEY (id)
 ) ENGINE = InnoDB;
-
 CREATE TABLE friend_requests (
   id INT NOT NULL AUTO_INCREMENT,
   from_user int REFERENCES users(id),
@@ -17,5 +16,25 @@ CREATE TABLE friend_requests (
   created_at TIMESTAMP DEFAULT NOW(),
   PRIMARY KEY (id)
 ) ENGINE = InnoDB;
-
-
+CREATE TABLE friend_requests (
+  id INT NOT NULL AUTO_INCREMENT,
+  from_user int REFERENCES users(id),
+  to_user int REFERENCES users(id),
+  status VARCHAR(100) DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (id)
+) ENGINE = InnoDB;
+CREATE TABLE chat_groups (
+  id INT NOT NULL AUTO_INCREMENT,
+  name NVARCHAR(200) NOT NULL,
+  owner int REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (id)
+) ENGINE = InnoDB;
+CREATE TABLE group_users (
+  id INT NOT NULL AUTO_INCREMENT,
+  group_id INT REFERENCES chat_groups(id),
+  user_id INT REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (id)
+) ENGINE = InnoDB;
