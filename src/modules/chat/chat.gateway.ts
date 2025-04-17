@@ -88,9 +88,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   handleDisconnect(client: Socket) {
-    console.log('Client disconnected:', client.id);
     this.clients = this.clients.filter((c) => c.clientId !== client.id);
-    console.log(`Remaining connected clients: ${this.clients.length}`);
+    console.log(`Client disconnected: ${client.id}. Remaining connected clients: ${this.clients.length}`);
   }
 
   /*==================================================================
@@ -116,7 +115,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       return;
     }
 
-    const isFriend = await this.chatService.isFriend(client.data.user.userId, data.toUser);
+    const isFriend = await this.chatService.isFriend(client.data.user.username, data.toUser);
     if (!isFriend) {
       console.log(`Users not friends: ${client.data.user.username} and ${data.toUser}`);
       client.emit('response', {
@@ -125,6 +124,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         msg: {
           error_type: 'not_friend',
           error_msg: 'You are not friends with this user',
+          toUser: data.toUser,
         },
       });
       return data;
