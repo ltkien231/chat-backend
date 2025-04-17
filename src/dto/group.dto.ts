@@ -12,3 +12,35 @@ export class CreateGroupDto {
   @IsString({ each: true })
   members: string[];
 }
+
+export class GroupMemberDto {
+  @ApiProperty({ example: 1, description: 'The ID of the group' })
+  @IsNotEmpty()
+  userId: number;
+
+  @ApiProperty({ example: 'John', description: 'The name of the user' })
+  @IsNotEmpty()
+  @IsString()
+  username: string;
+}
+
+export class GroupResponseDto {
+  @ApiProperty({ example: 1, description: 'The ID of the group' })
+  @IsNotEmpty()
+  id: number;
+
+  @ApiProperty({ example: 'My Group', description: 'The name of the group' })
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @ApiProperty({
+    example: [
+      { userId: 1, username: 'John' },
+      { userId: 2, username: 'Jane' },
+    ],
+    description: 'Members of the group',
+  })
+  @IsNotEmpty()
+  members: GroupMemberDto[];
+}

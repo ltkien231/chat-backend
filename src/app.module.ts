@@ -12,6 +12,7 @@ import { AuthMiddleware } from './middlewares/auth.middleware';
 import { ConfigService } from '@nestjs/config';
 import { DbConfig } from './types';
 import { AuthModule } from './modules/auth/auth.module';
+import { GroupModule } from './modules/group/group.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { AuthModule } from './modules/auth/auth.module';
     UserModule,
     FriendModule,
     ChatModule,
+    GroupModule,
   ],
   controllers: [AppController],
   providers: [AppService],
