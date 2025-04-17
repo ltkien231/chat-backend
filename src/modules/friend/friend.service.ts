@@ -60,4 +60,23 @@ export class FriendService {
     request.status = 'accepted';
     await this.repo.save(request);
   }
+
+  async getFriends(userId: number) {
+    const requests = await this.repo.find({
+      where: [
+        { from_user: userId, status: 'accepted' },
+        { to_user: userId, status: 'accepted' },
+      ],
+    });
+    const friendIds = requests.map((request) => {
+      return request.from_user === userId ? request.to_user : request.from_user;
+    });
+    const friends = await this.userService.findByIds(friendIds);
+
+    return friends.map((friend) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, createdAt, ...result } = friend;
+      return result;
+    });
+  }
 }

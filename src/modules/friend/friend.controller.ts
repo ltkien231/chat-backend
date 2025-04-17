@@ -2,12 +2,13 @@ import { Body, Controller, Post, Get, Request, UseGuards } from '@nestjs/common'
 import { FriendService } from './friend.service';
 import { AcceptFriendRequestDto, FriendRequestDto } from '../../dto/friend.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { ApiOperation } from '@nestjs/swagger';
 import { FriendRequestEntity } from '../../db/friendship.entity';
 
 @Controller('friends')
 @UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class FriendController {
   constructor(private friendService: FriendService) {}
 
@@ -50,5 +51,11 @@ export class FriendController {
   @ApiResponse({ status: 400, description: 'Bad Request' })
   async accept(@Request() req, @Body() body: AcceptFriendRequestDto) {
     return this.friendService.acceptRequest(req.user.id, body.requestId);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get friends list' })
+  async getFriends(@Request() req) {
+    return this.friendService.getFriends(req.user.id);
   }
 }

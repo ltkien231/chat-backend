@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { UserEntity } from '../../db/user.entity';
 import { UpdateProfileDto } from 'src/dto/user.dto';
 
@@ -34,5 +34,9 @@ export class UserService {
     }
     Object.assign(user, newProfile);
     return this.repo.save(user);
+  }
+
+  async findByIds(ids: number[]): Promise<UserEntity[]> {
+    return this.repo.findBy({ id: In(ids) });
   }
 }
