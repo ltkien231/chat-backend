@@ -18,10 +18,20 @@ import { DirectMessageEntity } from 'src/db/direct_message.entity';
 import { DirectMessageModule } from '../direct-message/direct-message.module';
 import { DirectMessageService } from '../direct-message/direct-message.service';
 import { UserService } from '../user/user.service';
+import { GroupMessageModule } from '../group-message/group-message.module';
+import { GroupMessageService } from '../group-message/group-message.service';
+import { GroupMessageEntity } from 'src/db/group_message.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FriendRequestEntity, UserEntity, GroupEntity, GroupUserEntity, DirectMessageEntity]),
+    TypeOrmModule.forFeature([
+      FriendRequestEntity,
+      UserEntity,
+      GroupEntity,
+      GroupUserEntity,
+      DirectMessageEntity,
+      GroupMessageEntity,
+    ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -32,11 +42,20 @@ import { UserService } from '../user/user.service';
     }),
     UserModule,
     DirectMessageModule,
+    GroupMessageModule,
     forwardRef(() => FriendModule),
     forwardRef(() => GroupModule),
     EventsModule,
   ],
-  providers: [ChatGateway, ChatService, RedisIoAdapter, GroupService, DirectMessageService, UserService],
+  providers: [
+    ChatGateway,
+    ChatService,
+    RedisIoAdapter,
+    GroupService,
+    DirectMessageService,
+    UserService,
+    GroupMessageService,
+  ],
   exports: [ChatGateway],
 })
 export class ChatModule {}

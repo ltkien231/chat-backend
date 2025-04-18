@@ -18,7 +18,9 @@ import { FRIEND_REQUEST_CHANNEL } from '../../common/constant';
 import { GroupService } from '../group/group.service';
 import { DirectMessageService } from '../direct-message/direct-message.service';
 import { DirectMessageEntity } from 'src/db/direct_message.entity';
+import { GroupMessageEntity } from 'src/db/group_message.entity';
 import { UserService } from '../user/user.service';
+import { GroupMessageService } from '../group-message/group-message.service';
 
 @WebSocketGateway({
   cors: {
@@ -46,6 +48,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly groupService: GroupService,
     private readonly userService: UserService,
     private readonly directMsgService: DirectMessageService,
+    private readonly groupMsgService: GroupMessageService,
     private readonly eventService: RedisEventService,
   ) {}
 
@@ -244,8 +247,15 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         timestamp: new Date(),
       };
 
-      console.log(`Emitting group message: ${JSON.stringify(messageObj)}`);
+      // save message to database
+      const messageEntity: Partial<GroupMessageEntity> = {
+        fromUser: client.data.user.userId,
+        groupId: data.groupId,
+        content: data.content,
+      };
+      await this.groupMsgService.saveMessage(messageEntity);
 
+      console.log(`Emitting group message: ${JSON.stringify(messageObj)}`);
       // Broadcast the message to the group room including the sender
       this.server.to(roomId).emit('groupMessage', messageObj);
 
