@@ -34,6 +34,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   private clients: SocketClient[] = [];
   private static readonly FRIEND_REQUEST_CHANNEL = FRIEND_REQUEST_CHANNEL;
+  private static readonly GROUP_ROOM_PREFIX = 'group:';
+  private static readonly GROUP_MEMBERSHIP_CHANNEL = 'group:membership';
 
   constructor(
     private readonly jwtService: JwtService,
@@ -42,9 +44,16 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly eventService: RedisEventService,
   ) {}
 
+  private static toRoomId(groupId: number): string {
+    return `${ChatGateway.GROUP_ROOM_PREFIX}${groupId}`;
+  }
+
   async onModuleInit() {
     // Subscribe to friend request events
     await this.eventService.subscribe(ChatGateway.FRIEND_REQUEST_CHANNEL, this.handleFriendRequestEvent.bind(this));
+
+    // Subscribe to group membership events
+    await this.eventService.subscribe(ChatGateway.GROUP_MEMBERSHIP_CHANNEL, this.handleGroupMembershipEvent.bind(this));
   }
 
   afterInit() {
@@ -78,6 +87,9 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
           username: payload.username,
           clientId: client.id,
         });
+
+        // Join user to their group rooms
+        await this.joinUserToGroupRooms(client, payload.id);
 
         // Send confirmation to client
         client.emit('connectionConfirmed', {
@@ -160,26 +172,103 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     console.log('Received groupMessage event:', data);
     console.log('From client:', client.id, 'User:', client.data?.user);
 
-    const group = await this.groupService.getGroup(data.toGroup);
-
-    const toClient = this.clients.filter((c) => group.members.find((member) => member.username === c.username));
-    if (toClient.length === 0) {
-      console.log(`Target group '${data.toGroup}' is offline or not found`);
+    if (!client.data?.user) {
+      console.error('No user data found for client:', client.id);
       client.emit('response', {
         msg_topic: 'groupMessage',
         msg_type: 'error',
         msg: {
-          error_type: 'group_offline',
-          error_msg: 'Group is offline or not found',
+          error_type: 'authentication',
+          error_msg: 'User not authenticated',
         },
       });
-      return data;
+      return;
     }
-    console.log(`Sending message to group ${data.toGroup}`);
+
+    const { groupId, content } = data;
+
+    try {
+      // Check if user is a member of the group
+      const isMember = await this.chatService.isGroupMember(groupId, client.data.user.userId);
+
+      if (!isMember) {
+        client.emit('response', {
+          msg_topic: 'groupMessage',
+          msg_type: 'error',
+          msg: {
+            error_type: 'not_member',
+            error_msg: 'You are not a member of this group',
+            groupId,
+          },
+        });
+        return;
+      }
+
+      // Broadcast the message to the group room
+      this.server.to(ChatGateway.toRoomId(groupId)).emit('groupMessage', {
+        groupId,
+        content,
+        fromUser: client.data.user.username,
+        timestamp: new Date(),
+      });
+
+      // Save the message to database if needed
+      // await this.chatService.saveGroupMessage(groupId, client.data.user.userId, content);
+    } catch (error) {
+      console.error('Error handling group message:', error);
+      client.emit('response', {
+        msg_topic: 'groupMessage',
+        msg_type: 'error',
+        msg: {
+          error_type: 'server_error',
+          error_msg: 'Failed to process group message',
+        },
+      });
+    }
+  }
+
+  /**
+   * When a user connects and authenticates, join them to all their group rooms
+   */
+  async joinUserToGroupRooms(client: Socket, userId: number) {
+    try {
+      // Get all groups the user belongs to
+      const userGroups = await this.groupService.getUserGroups(userId);
+
+      // Join the user to each group's room
+      for (const group of userGroups) {
+        const roomId = ChatGateway.toRoomId(group.id);
+        await client.join(roomId);
+        console.log(`User ${client.data.user.username} joined room ${roomId}`);
+      }
+    } catch (error) {
+      console.error(`Failed to join user to group rooms: ${error.message}`);
+    }
+  }
+
+  // Add method to handle joining/leaving group rooms when group membership changes
+  async handleGroupMembershipChange(groupId: number, userId: number, isJoining: boolean) {
+    const roomId = ChatGateway.toRoomId(groupId);
+
+    // Find all socket clients for this user
+    const userClients = this.clients.filter((client) => client.userId === userId);
+
+    for (const userClient of userClients) {
+      const clientSocket = this.server.sockets.sockets.get(userClient.clientId);
+      if (clientSocket) {
+        if (isJoining) {
+          await clientSocket.join(roomId);
+          console.log(`User ${userClient.username} joined room ${roomId}`);
+        } else {
+          await clientSocket.leave(roomId);
+          console.log(`User ${userClient.username} left room ${roomId}`);
+        }
+      }
+    }
   }
 
   /*==================================================================
-                          FRIEND REQUEST
+                          HANLDE REDIS EVENTS 
   ==================================================================*/
 
   sendFriendRequest(fromUsername: string, toUsername: string) {
@@ -204,5 +293,31 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         fromUser: { username: fromUsername },
       });
     }
+  }
+
+  /**
+   * Handle group membership changes from Redis events
+   */
+  private async handleGroupMembershipEvent(data: { groupId: number; userId: number; isJoining: boolean }) {
+    const { groupId, userId, isJoining } = data;
+    console.log(`Group membership change: User ${userId} ${isJoining ? 'joined' : 'left'} group ${groupId}`);
+
+    // Update socket room membership
+    await this.handleGroupMembershipChange(groupId, userId, isJoining);
+
+    // Notify group members about the change
+    const groupRoomId = ChatGateway.toRoomId(groupId);
+
+    // Find the username of the user who joined/left
+    const userClient = this.clients.find((client) => client.userId === userId);
+    const username = userClient?.username || `User ${userId}`;
+
+    // Emit to the group room
+    this.server.to(groupRoomId).emit('groupUpdate', {
+      groupId,
+      type: isJoining ? 'memberJoined' : 'memberLeft',
+      username,
+      timestamp: new Date(),
+    });
   }
 }

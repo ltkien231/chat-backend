@@ -1,13 +1,16 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { GroupEntity } from '../..//db/group.entity';
-import { GroupUserEntity } from '../..//db/group_user.entity';
-import { UserEntity } from '../..//db/user.entity';
-import { GroupResponseDto } from '../..//dto/group.dto';
+import { GroupEntity } from '../../db/group.entity';
+import { GroupUserEntity } from '../../db/group_user.entity';
+import { UserEntity } from '../../db/user.entity';
+import { GroupResponseDto } from '../../dto/group.dto';
 import { DataSource, In, Repository } from 'typeorm';
+import { RedisEventService } from '../../services/events/redis-event.service';
 
 @Injectable()
 export class GroupService {
+  private static readonly GROUP_MEMBERSHIP_CHANNEL = 'group:membership';
+
   constructor(
     @InjectRepository(GroupEntity)
     private readonly repo: Repository<GroupEntity>,
@@ -19,6 +22,7 @@ export class GroupService {
     private readonly userRepo: Repository<UserEntity>,
 
     private readonly dataSource: DataSource,
+    private readonly eventService: RedisEventService,
   ) {}
 
   async createGroup(name: string, owner: number, member_usernames: string[]): Promise<any> {
@@ -54,7 +58,7 @@ export class GroupService {
     }
   }
 
-  async getMyGroups(userId: number): Promise<any> {
+  async getUserGroups(userId: number): Promise<GroupResponseDto[]> {
     const groups = await this.repo.findBy({
       owner: userId,
     });
@@ -113,9 +117,9 @@ export class GroupService {
     };
   }
 
-  async addMembers(onwer: number, groupId: number, member_usernames: string[]): Promise<any> {
+  async addMembers(owner: number, groupId: number, member_usernames: string[]): Promise<any> {
     const group = await this.getGroup(groupId);
-    if (group.owner !== onwer) {
+    if (group.owner !== owner) {
       throw new BadRequestException('You are not the owner of this group');
     }
 
@@ -138,6 +142,11 @@ export class GroupService {
 
     await this.memberRepo.insert(newMembers);
 
+    // Notify chat gateway about the new members via Redis
+    for (const user of users) {
+      await this.notifyGroupMembershipChange(groupId, user.id, true);
+    }
+
     return {
       message: 'Members added successfully',
     };
@@ -149,16 +158,43 @@ export class GroupService {
       throw new BadRequestException('You are not the owner of this group');
     }
 
-    await this.dataSource.query(
-      `DELETE gu FROM group_users gu
-       LEFT JOIN users u ON gu.user_id = u.id
-       WHERE gu.group_id = ? AND u.username IN (?)`,
-      [groupId, member_usernames],
-    );
+    const users = await this.userRepo.find({
+      where: { username: In(member_usernames) },
+      select: ['id', 'username'],
+    });
 
-    // result.affectedRows
+    const userIds = users.map((user) => user.id);
+
+    if (userIds.length > 0) {
+      await this.memberRepo.delete({
+        group_id: groupId,
+        user_id: In(userIds),
+      });
+
+      // Notify chat gateway about removed members via Redis
+      for (const userId of userIds) {
+        await this.notifyGroupMembershipChange(groupId, userId, false);
+      }
+    }
+
     return {
       message: 'Members removed successfully',
     };
+  }
+
+  /**
+   * Notify other services (like ChatGateway) about group membership changes
+   */
+  private async notifyGroupMembershipChange(groupId: number, userId: number, isJoining: boolean): Promise<void> {
+    try {
+      await this.eventService.publish(GroupService.GROUP_MEMBERSHIP_CHANNEL, {
+        groupId,
+        userId,
+        isJoining,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Failed to notify group membership change:', error);
+    }
   }
 }

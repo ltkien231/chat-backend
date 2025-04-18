@@ -18,7 +18,7 @@ export interface DirectMessage {
 }
 
 export interface GroupMessage {
-  toGroup: number;
+  groupId: number; // ID of the group
   content: string;
 }
 

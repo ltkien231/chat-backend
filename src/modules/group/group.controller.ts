@@ -31,7 +31,7 @@ export class GroupController {
     isArray: true,
   })
   async getMyGroups(@Request() req) {
-    return this.groupService.getMyGroups(req.user.id);
+    return this.groupService.getUserGroups(req.user.id);
   }
 
   @Get(':id')
