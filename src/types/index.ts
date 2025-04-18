@@ -11,3 +11,13 @@ export interface SocketClient {
   username: string;
   clientId: string;
 }
+
+export interface DirectMessage {
+  toUser: string; // username of the recipient
+  content: string;
+}
+
+export interface GroupMessage {
+  toGroup: number;
+  content: string;
+}

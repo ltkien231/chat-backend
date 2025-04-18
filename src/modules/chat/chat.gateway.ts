@@ -10,7 +10,7 @@ import {
 } from '@nestjs/websockets';
 import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
-import { SocketClient } from '../../types';
+import { DirectMessage, GroupMessage, SocketClient } from '../../types';
 import { ChatService } from './chat.service';
 
 @WebSocketGateway({
@@ -97,23 +97,9 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ==================================================================*/
 
   @SubscribeMessage('directMessage')
-  async handleDirectMessage(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
+  async handleDirectMessage(@MessageBody() data: DirectMessage, @ConnectedSocket() client: Socket) {
     console.log('Received directMessage event:', data);
     console.log('From client:', client.id, 'User:', client.data?.user);
-
-    // Check if user data is available
-    if (!client.data?.user) {
-      console.error('No user data found for client:', client.id);
-      client.emit('response', {
-        msg_topic: 'directMessage',
-        msg_type: 'error',
-        msg: {
-          error_type: 'authentication',
-          error_msg: 'User not authenticated',
-        },
-      });
-      return;
-    }
 
     const isFriend = await this.chatService.isFriend(client.data.user.username, data.toUser);
     if (!isFriend) {
@@ -158,6 +144,12 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     });
 
     return data;
+  }
+
+  @SubscribeMessage('groupMessage')
+  async handleGroupMessage(@MessageBody() data: GroupMessage, @ConnectedSocket() client: Socket) {
+    console.log('Received groupMessage event:', data);
+    console.log('From client:', client.id, 'User:', client.data?.user);
   }
 
   /*==================================================================

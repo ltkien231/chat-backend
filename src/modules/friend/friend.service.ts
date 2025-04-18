@@ -23,6 +23,19 @@ export class FriendService {
       throw new BadRequestException('You cannot send a friend request to yourself');
     }
 
+    const requestExists = await this.repo.findOne({
+      where: {
+        from_user: fromUserId,
+        to_user: toUser.id,
+      },
+    });
+    if (requestExists) {
+      if (requestExists.status === 'accepted') {
+        throw new BadRequestException('You are already friends');
+      }
+      throw new BadRequestException('Friend request already sent');
+    }
+
     const friendRequest: Partial<FriendRequestEntity> = {
       from_user: fromUserId,
       to_user: toUser.id,
