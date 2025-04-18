@@ -40,6 +40,8 @@ import { EventsModule } from './services/events/events.module';
           // synchronize: true,
           ssl: env === 'production' ? { secureProtocol: 'TLSv1_3_method' } : undefined,
           logging: env !== 'production',
+          charset: 'utf8mb4', // Support for full UTF-8 including emojis
+          collation: 'utf8mb4_unicode_ci', // Unicode case-insensitive collation
         };
       },
       inject: [ConfigService],
