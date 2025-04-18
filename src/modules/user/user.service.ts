@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { UserEntity } from '../../db/user.entity';
 import { UpdateProfileDto } from '../../dto/user.dto';
+import { SearchUserQuery } from 'src/types';
 
 @Injectable()
 export class UserService {
@@ -38,5 +39,27 @@ export class UserService {
 
   async findByIds(ids: number[]): Promise<UserEntity[]> {
     return this.repo.findBy({ id: In(ids) });
+  }
+
+  async searchUsers(query: SearchUserQuery): Promise<UserEntity[]> {
+    if (query.email && query.username) {
+      return this.repo
+        .createQueryBuilder('users')
+        .where('users.username LIKE :query', { query: `%${query.username}%` })
+        .andWhere('users.email LIKE :query', { query: `%${query.email}%` })
+        .getMany();
+    } else if (query.username) {
+      return this.repo
+        .createQueryBuilder('users')
+        .where('users.username LIKE :query', { query: `%${query.username}%` })
+        .getMany();
+    } else if (query.email) {
+      return this.repo
+        .createQueryBuilder('users')
+        .where('users.email LIKE :query', { query: `%${query.email}%` })
+        .getMany();
+    } else {
+      return [];
+    }
   }
 }

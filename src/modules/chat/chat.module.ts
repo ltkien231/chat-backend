@@ -10,10 +10,14 @@ import { UserEntity } from '../../db/user.entity';
 import { ChatService } from './chat.service';
 import { RedisIoAdapter } from '../../adapters/redis-io.adapter';
 import { EventsModule } from '../../services/events/events.module';
+import { GroupService } from '../group/group.service';
+import { GroupModule } from '../group/group.module';
+import { GroupEntity } from 'src/db/group.entity';
+import { GroupUserEntity } from 'src/db/group_user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FriendRequestEntity, UserEntity]),
+    TypeOrmModule.forFeature([FriendRequestEntity, UserEntity, GroupEntity, GroupUserEntity]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -23,10 +27,11 @@ import { EventsModule } from '../../services/events/events.module';
       inject: [ConfigService],
     }),
     UserModule,
+    GroupModule,
     forwardRef(() => FriendModule),
     EventsModule,
   ],
-  providers: [ChatGateway, ChatService, RedisIoAdapter],
+  providers: [ChatGateway, ChatService, RedisIoAdapter, GroupService],
   exports: [ChatGateway],
 })
 export class ChatModule {}

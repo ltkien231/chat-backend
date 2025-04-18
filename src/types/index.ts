@@ -21,3 +21,8 @@ export interface GroupMessage {
   toGroup: number;
   content: string;
 }
+
+export interface SearchUserQuery {
+  username?: string;
+  email?: string;
+}

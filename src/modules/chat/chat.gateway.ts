@@ -15,6 +15,7 @@ import { ChatService } from './chat.service';
 import { OnModuleInit } from '@nestjs/common';
 import { RedisEventService } from '../../services/events/redis-event.service';
 import { FRIEND_REQUEST_CHANNEL } from '../../common/constant';
+import { GroupService } from '../group/group.service';
 
 @WebSocketGateway({
   cors: {
@@ -37,6 +38,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   constructor(
     private readonly jwtService: JwtService,
     private readonly chatService: ChatService,
+    private readonly groupService: GroupService,
     private readonly eventService: RedisEventService,
   ) {}
 
@@ -157,6 +159,23 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   async handleGroupMessage(@MessageBody() data: GroupMessage, @ConnectedSocket() client: Socket) {
     console.log('Received groupMessage event:', data);
     console.log('From client:', client.id, 'User:', client.data?.user);
+
+    const group = await this.groupService.getGroup(data.toGroup);
+
+    const toClient = this.clients.filter((c) => group.members.find((member) => member.username === c.username));
+    if (toClient.length === 0) {
+      console.log(`Target group '${data.toGroup}' is offline or not found`);
+      client.emit('response', {
+        msg_topic: 'groupMessage',
+        msg_type: 'error',
+        msg: {
+          error_type: 'group_offline',
+          error_msg: 'Group is offline or not found',
+        },
+      });
+      return data;
+    }
+    console.log(`Sending message to group ${data.toGroup}`);
   }
 
   /*==================================================================
