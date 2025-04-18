@@ -62,9 +62,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   async handleConnection(client: Socket) {
-    console.log('New client connection attempt', client.id);
-    console.log('Auth data received:', client.handshake.auth);
-
     try {
       const token = client.handshake.auth.token; // Get token from client
 
@@ -169,8 +166,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   @SubscribeMessage('groupMessage')
   async handleGroupMessage(@MessageBody() data: GroupMessage, @ConnectedSocket() client: Socket) {
-    console.log('Received groupMessage event:', data);
-    console.log('From client:', client.id, 'User:', client.data?.user);
+    console.log('Received groupMessage event:', JSON.stringify(data));
+    console.log('From client:', client.id, 'User:', JSON.stringify(client.data?.user));
 
     if (!client.data?.user) {
       console.error('No user data found for client:', client.id);
@@ -191,6 +188,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       // Check if user is a member of the group
       const isMember = await this.chatService.isGroupMember(groupId, client.data.user.userId);
 
+      console.log(
+        `User ${client.data.user.username} (${client.data.user.userId}) 
+        is${isMember ? '' : ' NOT'} a member of group ${groupId}`,
+      );
+
       if (!isMember) {
         client.emit('response', {
           msg_topic: 'groupMessage',
@@ -204,18 +206,46 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         return;
       }
 
-      // Broadcast the message to the group room
-      this.server.to(ChatGateway.toRoomId(groupId)).emit('groupMessage', {
+      // Get the room ID for this group
+      const roomId = ChatGateway.toRoomId(groupId);
+      console.log(`Broadcasting group message to room ${roomId}`);
+
+      // Log the rooms this client is in
+      const clientRooms = Object.keys(client.rooms || {});
+      console.log(`Client ${client.data.user.username} rooms: ${JSON.stringify(clientRooms)}`);
+
+      // Log all sockets in this room
+      const socketsInRoom = await this.server.in(roomId).fetchSockets();
+      console.log(`Clients in room ${roomId}: ${socketsInRoom.length}`);
+      socketsInRoom.forEach((socket) => {
+        console.log(`Socket in room ${roomId}: ${socket.id}, user: ${JSON.stringify(socket.data?.user)}`);
+      });
+
+      // Create message object
+      const messageObj = {
         groupId,
         content,
         fromUser: client.data.user.username,
+        fromUserId: client.data.user.userId,
         timestamp: new Date(),
+      };
+
+      console.log(`Emitting group message: ${JSON.stringify(messageObj)}`);
+
+      // Broadcast the message to the group room including the sender
+      this.server.to(roomId).emit('groupMessage', messageObj);
+
+      // Also send confirmation to the sender
+      client.emit('messageSent', {
+        status: 'success',
+        toGroup: groupId,
+        content: content,
       });
 
-      // Save the message to database if needed
-      // await this.chatService.saveGroupMessage(groupId, client.data.user.userId, content);
+      console.log(`Group message sent to room ${roomId}`);
     } catch (error) {
       console.error('Error handling group message:', error);
+      console.error(error.stack);
       client.emit('response', {
         msg_topic: 'groupMessage',
         msg_type: 'error',
@@ -234,13 +264,13 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     try {
       // Get all groups the user belongs to
       const userGroups = await this.groupService.getUserGroups(userId);
+      console.log(`User ${client.data.user.username} (${userId}) has ${userGroups.length} groups. Joining rooms...`);
 
-      // Join the user to each group's room
-      for (const group of userGroups) {
-        const roomId = ChatGateway.toRoomId(group.id);
-        await client.join(roomId);
-        console.log(`User ${client.data.user.username} joined room ${roomId}`);
-      }
+      const roomIds = userGroups.map((group) => ChatGateway.toRoomId(group.id));
+      await client.join(roomIds);
+      console.log(`User ${client.data.user.username} joined room ${roomIds}`);
+      const socketsInRoom = await this.server.in(roomIds[0]).fetchSockets();
+      console.log(`Clients in room ${roomIds[0]}: ${socketsInRoom.length}`);
     } catch (error) {
       console.error(`Failed to join user to group rooms: ${error.message}`);
     }
@@ -268,7 +298,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   /*==================================================================
-                          HANLDE REDIS EVENTS 
+                          HANDLE REDIS EVENTS 
   ==================================================================*/
 
   sendFriendRequest(fromUsername: string, toUsername: string) {

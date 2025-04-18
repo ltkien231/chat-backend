@@ -59,17 +59,21 @@ export class GroupService {
   }
 
   async getUserGroups(userId: number): Promise<GroupResponseDto[]> {
-    const groups = await this.repo.findBy({
-      owner: userId,
+    const groups = await this.memberRepo.findBy({
+      user_id: userId,
     });
     if (!groups) {
       return [];
     }
-    const groupIds = groups.map((g) => g.id);
+
+    const groupIds = groups.map((g) => g.group_id);
     return this.getGroups(groupIds);
   }
 
   async getGroups(groupIds: number[]): Promise<GroupResponseDto[]> {
+    if (groupIds.length === 0) {
+      return [];
+    }
     const res = await this.dataSource.query(
       `SELECT g.owner, g.id, g.name, u.id as user_id, u.username FROM group_users gu
        LEFT JOIN users u ON gu.user_id = u.id
