@@ -38,3 +38,23 @@ CREATE TABLE group_users (
   created_at TIMESTAMP DEFAULT NOW(),
   PRIMARY KEY (id)
 ) ENGINE = InnoDB;
+CREATE TABLE direct_messages (
+  id INT NOT NULL AUTO_INCREMENT,
+  from_user INT REFERENCES users(id),
+  to_user INT REFERENCES users(id),
+  content TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  attachment MEDIUMBLOB,
+  attachment_type VARCHAR(50),
+  created_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (id)
+) ENGINE = InnoDB;
+CREATE TABLE group_messages (
+  id INT NOT NULL AUTO_INCREMENT,
+  from_user INT REFERENCES users(id),
+  group_id INT REFERENCES chat_groups(id),
+  content TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  attachment MEDIUMBLOB,
+  attachment_type VARCHAR(50),
+  created_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (id)
+) ENGINE = InnoDB;

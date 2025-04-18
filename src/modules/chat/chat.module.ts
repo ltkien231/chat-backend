@@ -14,10 +14,14 @@ import { GroupService } from '../group/group.service';
 import { GroupModule } from '../group/group.module';
 import { GroupEntity } from 'src/db/group.entity';
 import { GroupUserEntity } from 'src/db/group_user.entity';
+import { DirectMessageEntity } from 'src/db/direct_message.entity';
+import { DirectMessageModule } from '../direct-message/direct-message.module';
+import { DirectMessageService } from '../direct-message/direct-message.service';
+import { UserService } from '../user/user.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FriendRequestEntity, UserEntity, GroupEntity, GroupUserEntity]),
+    TypeOrmModule.forFeature([FriendRequestEntity, UserEntity, GroupEntity, GroupUserEntity, DirectMessageEntity]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -27,11 +31,12 @@ import { GroupUserEntity } from 'src/db/group_user.entity';
       inject: [ConfigService],
     }),
     UserModule,
+    DirectMessageModule,
     forwardRef(() => FriendModule),
     forwardRef(() => GroupModule),
     EventsModule,
   ],
-  providers: [ChatGateway, ChatService, RedisIoAdapter, GroupService],
+  providers: [ChatGateway, ChatService, RedisIoAdapter, GroupService, DirectMessageService, UserService],
   exports: [ChatGateway],
 })
 export class ChatModule {}

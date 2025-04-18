@@ -16,6 +16,9 @@ import { OnModuleInit } from '@nestjs/common';
 import { RedisEventService } from '../../services/events/redis-event.service';
 import { FRIEND_REQUEST_CHANNEL } from '../../common/constant';
 import { GroupService } from '../group/group.service';
+import { DirectMessageService } from '../direct-message/direct-message.service';
+import { DirectMessageEntity } from 'src/db/direct_message.entity';
+import { UserService } from '../user/user.service';
 
 @WebSocketGateway({
   cors: {
@@ -41,6 +44,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly jwtService: JwtService,
     private readonly chatService: ChatService,
     private readonly groupService: GroupService,
+    private readonly userService: UserService,
+    private readonly directMsgService: DirectMessageService,
     private readonly eventService: RedisEventService,
   ) {}
 
@@ -148,7 +153,16 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       return data;
     }
 
-    console.log(`Sending message to ${toClient.username} (${toClient.clientId})`);
+    // save message to database
+    const toUser = await this.userService.findOneByUsername(data.toUser);
+    const messageEntity: Partial<DirectMessageEntity> = {
+      fromUser: client.data.user.userId,
+      toUser: toUser.id,
+      content: data.content,
+    };
+    await this.directMsgService.saveMessage(messageEntity);
+
+    // Emit the message to the target user
     this.server.to(toClient.clientId).emit('directMessage', {
       content: data.content,
       fromUser: client.data.user.username,
