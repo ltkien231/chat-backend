@@ -34,6 +34,10 @@ export class GroupResponseDto {
   @IsString()
   name: string;
 
+  @ApiProperty({ example: 1, description: 'The ID of the owner' })
+  @IsNotEmpty()
+  owner: number;
+
   @ApiProperty({
     example: [
       { userId: 1, username: 'John' },

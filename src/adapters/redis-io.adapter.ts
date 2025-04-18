@@ -38,8 +38,8 @@ export class RedisIoAdapter extends IoAdapter {
       const subClient = pubClient.duplicate();
 
       await Promise.all([
-        pubClient.connect().then(() => this.logger.log('Redis PUB client connected')),
-        subClient.connect().then(() => this.logger.log('Redis  client connected')),
+        pubClient.connect().then(() => this.logger.log('Redis Socket Adapter PUB client connected')),
+        subClient.connect().then(() => this.logger.log('Redis Socket Adapter SUB client connected')),
       ]);
 
       this.adapterConstructor = createAdapter(pubClient, subClient);

@@ -1,17 +1,20 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
-import { ChatGateway } from '../chat/chat.gateway';
 import { FriendRequestEntity } from '../../db/friendship.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { RedisEventService } from '../../services/events/redis-event.service';
+import { FRIEND_REQUEST_CHANNEL } from '../../common/constant';
 
 @Injectable()
 export class FriendService {
+  private static readonly FRIEND_REQUEST_CHANNEL = FRIEND_REQUEST_CHANNEL;
+
   constructor(
     @InjectRepository(FriendRequestEntity)
     private readonly repo: Repository<FriendRequestEntity>,
     private readonly userService: UserService,
-    private readonly chatGateway: ChatGateway,
+    private readonly eventService: RedisEventService,
   ) {}
 
   async request(fromUserId: number, fromUsername: string, toUsername: string) {
@@ -42,7 +45,11 @@ export class FriendService {
     };
     await this.repo.save(friendRequest);
 
-    this.chatGateway.sendFriendRequest(fromUsername, toUsername);
+    // Publish friend request event instead of directly calling ChatGateway
+    await this.eventService.publish(FriendService.FRIEND_REQUEST_CHANNEL, {
+      fromUsername,
+      toUsername,
+    });
   }
 
   async getIncomingRequests(userId: number) {

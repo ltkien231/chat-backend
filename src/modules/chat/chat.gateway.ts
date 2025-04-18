@@ -12,6 +12,9 @@ import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
 import { DirectMessage, GroupMessage, SocketClient } from '../../types';
 import { ChatService } from './chat.service';
+import { OnModuleInit } from '@nestjs/common';
+import { RedisEventService } from '../../services/events/redis-event.service';
+import { FRIEND_REQUEST_CHANNEL } from '../../common/constant';
 
 @WebSocketGateway({
   cors: {
@@ -24,16 +27,23 @@ import { ChatService } from './chat.service';
   transports: ['polling', 'websocket'],
   namespace: '/',
 })
-export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, OnModuleInit {
   @WebSocketServer()
   server: Server;
 
   private clients: SocketClient[] = [];
+  private static readonly FRIEND_REQUEST_CHANNEL = FRIEND_REQUEST_CHANNEL;
 
   constructor(
     private readonly jwtService: JwtService,
     private readonly chatService: ChatService,
+    private readonly eventService: RedisEventService,
   ) {}
+
+  async onModuleInit() {
+    // Subscribe to friend request events
+    await this.eventService.subscribe(ChatGateway.FRIEND_REQUEST_CHANNEL, this.handleFriendRequestEvent.bind(this));
+  }
 
   afterInit() {
     console.log('WebSocket Server Initialized');
@@ -41,7 +51,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   async handleConnection(client: Socket) {
-    // const sockets = this.server.sockets.sockets;
     console.log('New client connection attempt', client.id);
     console.log('Auth data received:', client.handshake.auth);
 
@@ -62,8 +71,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         };
 
         console.log('User authenticated Websocket:', payload, client.id);
-        // TODO: check why undefined
-        // console.log(`Number of connected clients: ${sockets.size}`);
         this.clients.push({
           userId: payload.id,
           username: payload.username,
@@ -162,6 +169,20 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       this.server.to(toClient.clientId).emit('friendRequest', {
         content: `${fromUsername} sent you a friend request`,
         fromUser: { id: fromUsername, name: fromUsername },
+      });
+    }
+  }
+
+  // Handle friend request events from Redis
+  private handleFriendRequestEvent(data: { fromUsername: string; toUsername: string }) {
+    const { fromUsername, toUsername } = data;
+    console.log('SERVER: Received friend request event:', data);
+    // Find the target client and send the friend request notification
+    const toClient = this.clients.find((client) => client.username === toUsername);
+    if (toClient) {
+      this.server.to(toClient.clientId).emit('friendRequest', {
+        content: `${fromUsername} sent you a friend request`,
+        fromUser: { username: fromUsername },
       });
     }
   }

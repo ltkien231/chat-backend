@@ -9,6 +9,7 @@ import { FriendRequestEntity } from '../../db/friendship.entity';
 import { UserEntity } from '../../db/user.entity';
 import { ChatService } from './chat.service';
 import { RedisIoAdapter } from '../../adapters/redis-io.adapter';
+import { EventsModule } from '../../services/events/events.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { RedisIoAdapter } from '../../adapters/redis-io.adapter';
     }),
     UserModule,
     forwardRef(() => FriendModule),
+    EventsModule,
   ],
   providers: [ChatGateway, ChatService, RedisIoAdapter],
   exports: [ChatGateway],

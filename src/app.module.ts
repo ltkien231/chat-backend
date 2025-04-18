@@ -13,6 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import { DbConfig } from './types';
 import { AuthModule } from './modules/auth/auth.module';
 import { GroupModule } from './modules/group/group.module';
+import { EventsModule } from './services/events/events.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { GroupModule } from './modules/group/group.module';
     FriendModule,
     ChatModule,
     GroupModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

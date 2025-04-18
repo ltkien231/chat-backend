@@ -1,4 +1,4 @@
-import { Body, Request, Controller, UseGuards, Post, Get, Param } from '@nestjs/common';
+import { Body, Request, Controller, UseGuards, Post, Get, Param, BadRequestException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GroupService } from './group.service';
 import { CreateGroupDto, GroupResponseDto } from 'src/dto/group.dto';
@@ -41,7 +41,17 @@ export class GroupController {
     description: 'Group retrieved successfully',
     type: GroupResponseDto,
   })
-  async getGroup(@Param('id') id: number) {
-    return await this.groupService.getGroup(id);
+  async getGroup(@Request() req, @Param('id') id: number) {
+    const group = await this.groupService.getGroup(id);
+    if (!group.members.find((item) => item.userId === req.user.id)) {
+      throw new BadRequestException('You are not a member of this group');
+    }
+    return group;
+  }
+
+  @Post(':groupId/members')
+  @ApiOperation({ summary: 'Add members to group' })
+  async addMembers(@Request() req, @Param('groupId') groupId: number, @Body() body: { members: string[] }) {
+    return this.groupService.addMembers(req.user.id, groupId, body.members);
   }
 }
