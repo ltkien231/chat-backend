@@ -51,7 +51,27 @@ export class GroupController {
 
   @Post(':groupId/members')
   @ApiOperation({ summary: 'Add members to group' })
+  @ApiResponse({
+    status: 200,
+    description: 'Members added successfully',
+    type: typeof {
+      message: 'Members added successfully',
+    },
+  })
   async addMembers(@Request() req, @Param('groupId') groupId: number, @Body() body: { members: string[] }) {
     return this.groupService.addMembers(req.user.id, groupId, body.members);
+  }
+
+  @Post(':groupId/members/remove')
+  @ApiOperation({ summary: 'Remove members of group' })
+  @ApiResponse({
+    status: 200,
+    description: 'Members removed successfully',
+    type: typeof {
+      message: 'Members removed successfully',
+    },
+  })
+  async removeMembers(@Request() req, @Param('groupId') groupId: number, @Body() body: { members: string[] }) {
+    return this.groupService.removeMembers(req.user.id, groupId, body.members);
   }
 }

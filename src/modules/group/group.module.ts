@@ -3,8 +3,8 @@ import { GroupService } from './group.service';
 import { GroupEntity } from '../../db/group.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GroupController } from './group.controller';
-import { GroupUserEntity } from 'src/db/group_user.entity';
-import { UserEntity } from 'src/db/user.entity';
+import { GroupUserEntity } from '../../db/group_user.entity';
+import { UserEntity } from '../../db/user.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([GroupEntity, GroupUserEntity, UserEntity])],

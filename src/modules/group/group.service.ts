@@ -11,8 +11,13 @@ export class GroupService {
   constructor(
     @InjectRepository(GroupEntity)
     private readonly repo: Repository<GroupEntity>,
+
+    @InjectRepository(GroupUserEntity)
     private readonly memberRepo: Repository<GroupUserEntity>,
+
+    @InjectRepository(UserEntity)
     private readonly userRepo: Repository<UserEntity>,
+
     private readonly dataSource: DataSource,
   ) {}
 
@@ -135,6 +140,25 @@ export class GroupService {
 
     return {
       message: 'Members added successfully',
+    };
+  }
+
+  async removeMembers(owner: number, groupId: number, member_usernames: string[]): Promise<any> {
+    const group = await this.getGroup(groupId);
+    if (group.owner !== owner) {
+      throw new BadRequestException('You are not the owner of this group');
+    }
+
+    await this.dataSource.query(
+      `DELETE gu FROM group_users gu
+       LEFT JOIN users u ON gu.user_id = u.id
+       WHERE gu.group_id = ? AND u.username IN (?)`,
+      [groupId, member_usernames],
+    );
+
+    // result.affectedRows
+    return {
+      message: 'Members removed successfully',
     };
   }
 }
