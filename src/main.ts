@@ -21,15 +21,10 @@ async function bootstrap() {
 
   // Setup CORS for REST endpoints
   app.enableCors({
-    origin: [
-      'http://localhost:3001', 
-      'http://localhost:3000',
-      'https://chatchick.azurewebsites.net',
-      process.env.FRONTEND_URL, // Add environment variable support
-    ].filter(Boolean), // Filter out undefined values
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true, // Enable credentials
-    allowedHeaders: 'Content-Type, Accept, Authorization',
+    origin: '*', // Add your frontend origins here
+    // methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    // credentials: true, // Enable credentials
+    // allowedHeaders: 'Content-Type, Accept, Authorization',
   });
 
   const config = new DocumentBuilder()
