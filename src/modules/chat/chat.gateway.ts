@@ -163,12 +163,24 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       toUser: toUser.id,
       content: data.content,
     };
+
+    // Handle image attachment if present
+    if (data.attachment && data.attachmentType) {
+      // Convert Base64 string to Buffer
+      const attachmentBuffer = Buffer.from(data.attachment, 'base64');
+      messageEntity.attachment = attachmentBuffer;
+      messageEntity.attachmentType = data.attachmentType;
+      console.log(`Attachment found: Type ${data.attachmentType}, Size: ${attachmentBuffer.length} bytes`);
+    }
+
     await this.directMsgService.saveMessage(messageEntity);
 
     // Emit the message to the target user
     this.server.to(toClient.clientId).emit('directMessage', {
       content: data.content,
       fromUser: client.data.user.username,
+      attachment: data.attachment,
+      attachmentType: data.attachmentType,
     });
 
     // Confirm message was sent
@@ -176,6 +188,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       status: 'success',
       to: data.toUser,
       content: data.content,
+      hasAttachment: !!data.attachment,
     });
 
     return data;
@@ -245,6 +258,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         fromUser: client.data.user.username,
         fromUserId: client.data.user.userId,
         timestamp: new Date(),
+        attachment: data.attachment,
+        attachmentType: data.attachmentType,
       };
 
       // save message to database
@@ -253,6 +268,16 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         groupId: data.groupId,
         content: data.content,
       };
+
+      // Handle image attachment if present
+      if (data.attachment && data.attachmentType) {
+        // Convert Base64 string to Buffer
+        const attachmentBuffer = Buffer.from(data.attachment, 'base64');
+        messageEntity.attachment = attachmentBuffer;
+        messageEntity.attachmentType = data.attachmentType;
+        console.log(`Attachment found: Type ${data.attachmentType}, Size: ${attachmentBuffer.length} bytes`);
+      }
+
       await this.groupMsgService.saveMessage(messageEntity);
 
       console.log(`Emitting group message: ${JSON.stringify(messageObj)}`);
@@ -264,6 +289,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         status: 'success',
         toGroup: groupId,
         content: content,
+        hasAttachment: !!data.attachment,
       });
 
       console.log(`Group message sent to room ${roomId}`);

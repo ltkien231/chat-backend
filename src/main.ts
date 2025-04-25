@@ -23,7 +23,7 @@ async function bootstrap() {
   app.enableCors({
     origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true,
+    credentials: false,
   });
 
   const config = new DocumentBuilder()
@@ -37,7 +37,7 @@ async function bootstrap() {
 
   const port = configService.get('PORT') || 8080;
   await app.listen(port);
-  console.log(`Application is running on port: ${port}`);
+  console.log(`Application is running on port ${port}`);
   console.log(`Socket.IO server available at http://localhost:${port}/socket.io/`);
 }
 bootstrap();
