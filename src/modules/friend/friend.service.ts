@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { FriendRequestEntity } from '../../db/friendship.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { RedisEventService } from '../../services/events/redis-event.service';
 import { FRIEND_REQUEST_CHANNEL } from '../../common/constant';
 
@@ -15,6 +15,7 @@ export class FriendService {
     private readonly repo: Repository<FriendRequestEntity>,
     private readonly userService: UserService,
     private readonly eventService: RedisEventService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async request(fromUserId: number, fromUsername: string, toUsername: string) {
@@ -53,21 +54,25 @@ export class FriendService {
   }
 
   async getIncomingRequests(userId: number) {
-    return this.repo.find({
-      where: {
-        to_user: userId,
-        status: 'pending',
-      },
-    });
+    const result = await this.dataSource.query(
+      `SELECT u.id, u.username, u.last_name, u.first_name, u.email 
+      FROM friend_requests r LEFT JOIN users u
+      ON u.id = r.from_user
+      WHERE r.to_user = ? AND r.status = 'pending'`,
+      [userId],
+    );
+    return result;
   }
 
   async getOutgoingRequests(userId: number) {
-    return this.repo.find({
-      where: {
-        from_user: userId,
-        status: 'pending',
-      },
-    });
+    const result = await this.dataSource.query(
+      `SELECT u.id, u.username, u.last_name, u.first_name, u.email 
+      FROM friend_requests r LEFT JOIN users u
+      ON u.id = r.to_user
+      WHERE r.from_user = ? AND r.status = 'pending'`,
+      [userId],
+    );
+    return result;
   }
 
   async acceptRequest(userId: number, requestId: number) {
