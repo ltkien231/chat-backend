@@ -23,7 +23,7 @@ async function bootstrap() {
   app.enableCors({
     origin: '*', // Add your frontend origins here
     // methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    // credentials: true, // Enable credentials
+    credentials: true, // Enable credentials
     // allowedHeaders: 'Content-Type, Accept, Authorization',
   });
 
