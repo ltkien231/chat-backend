@@ -55,7 +55,7 @@ export class FriendService {
 
   async getIncomingRequests(userId: number) {
     const result = await this.dataSource.query(
-      `SELECT u.id, u.username, u.last_name, u.first_name, u.email 
+      `SELECT r.id, u.id as user_id, u.username, u.last_name, u.first_name, u.email 
       FROM friend_requests r LEFT JOIN users u
       ON u.id = r.from_user
       WHERE r.to_user = ? AND r.status = 'pending'`,
@@ -66,7 +66,7 @@ export class FriendService {
 
   async getOutgoingRequests(userId: number) {
     const result = await this.dataSource.query(
-      `SELECT u.id, u.username, u.last_name, u.first_name, u.email 
+      `SELECT r.id, u.id as user_id, u.username, u.last_name, u.first_name, u.email 
       FROM friend_requests r LEFT JOIN users u
       ON u.id = r.to_user
       WHERE r.from_user = ? AND r.status = 'pending'`,

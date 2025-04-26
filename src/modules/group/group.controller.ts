@@ -2,11 +2,12 @@ import { Body, Request, Controller, UseGuards, Post, Get, Param, BadRequestExcep
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GroupService } from './group.service';
 import { CreateGroupDto, GroupResponseDto } from 'src/dto/group.dto';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GroupEntity } from 'src/db/group.entity';
 
 @Controller('groups')
 @UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class GroupController {
   constructor(private groupService: GroupService) {}
 
