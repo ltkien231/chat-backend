@@ -48,3 +48,8 @@ export class GroupResponseDto {
   @IsNotEmpty()
   members: GroupMemberDto[];
 }
+
+export class UpdateMemberDto {
+  @ApiProperty({ example: [1, 2], description: 'The IDs of the members to be added/removed' })
+  members: string[];
+}

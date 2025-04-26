@@ -1,7 +1,7 @@
 import { Body, Request, Controller, UseGuards, Post, Get, Param, BadRequestException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GroupService } from './group.service';
-import { CreateGroupDto, GroupResponseDto } from 'src/dto/group.dto';
+import { CreateGroupDto, GroupResponseDto, UpdateMemberDto } from 'src/dto/group.dto';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GroupEntity } from 'src/db/group.entity';
 
@@ -59,7 +59,7 @@ export class GroupController {
       message: 'Members added successfully',
     },
   })
-  async addMembers(@Request() req, @Param('groupId') groupId: number, @Body() body: { members: string[] }) {
+  async addMembers(@Request() req, @Param('groupId') groupId: number, @Body() body: UpdateMemberDto) {
     return this.groupService.addMembers(req.user.id, groupId, body.members);
   }
 
@@ -72,7 +72,7 @@ export class GroupController {
       message: 'Members removed successfully',
     },
   })
-  async removeMembers(@Request() req, @Param('groupId') groupId: number, @Body() body: { members: string[] }) {
+  async removeMembers(@Request() req, @Param('groupId') groupId: number, @Body() body: UpdateMemberDto) {
     return this.groupService.removeMembers(req.user.id, groupId, body.members);
   }
 }
