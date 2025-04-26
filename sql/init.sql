@@ -8,7 +8,6 @@ CREATE TABLE users (
   created_at TIMESTAMP DEFAULT NOW(),
   PRIMARY KEY (id)
 ) ENGINE = InnoDB;
-
 CREATE TABLE friend_requests (
   id INT NOT NULL AUTO_INCREMENT,
   from_user int REFERENCES users(id),
@@ -17,7 +16,6 @@ CREATE TABLE friend_requests (
   created_at TIMESTAMP DEFAULT NOW(),
   PRIMARY KEY (id)
 ) ENGINE = InnoDB;
-
 CREATE TABLE chat_groups (
   id INT NOT NULL AUTO_INCREMENT,
   name NVARCHAR(200) NOT NULL,
@@ -25,7 +23,6 @@ CREATE TABLE chat_groups (
   created_at TIMESTAMP DEFAULT NOW(),
   PRIMARY KEY (id)
 ) ENGINE = InnoDB;
-
 CREATE TABLE group_users (
   id INT NOT NULL AUTO_INCREMENT,
   group_id INT REFERENCES chat_groups(id),
@@ -33,7 +30,6 @@ CREATE TABLE group_users (
   created_at TIMESTAMP DEFAULT NOW(),
   PRIMARY KEY (id)
 ) ENGINE = InnoDB;
-
 CREATE TABLE direct_messages (
   id INT NOT NULL AUTO_INCREMENT,
   from_user INT REFERENCES users(id),
@@ -41,10 +37,10 @@ CREATE TABLE direct_messages (
   content TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   attachment MEDIUMBLOB,
   attachment_type VARCHAR(50),
+  attachment_name NVARCHAR(100),
   created_at TIMESTAMP DEFAULT NOW(),
   PRIMARY KEY (id)
 ) ENGINE = InnoDB;
-
 CREATE TABLE group_messages (
   id INT NOT NULL AUTO_INCREMENT,
   from_user INT REFERENCES users(id),
@@ -52,6 +48,7 @@ CREATE TABLE group_messages (
   content TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   attachment MEDIUMBLOB,
   attachment_type VARCHAR(50),
+  attachment_name NVARCHAR(100),
   created_at TIMESTAMP DEFAULT NOW(),
   PRIMARY KEY (id)
 ) ENGINE = InnoDB;
