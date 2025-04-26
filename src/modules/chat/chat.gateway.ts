@@ -178,12 +178,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     };
 
     // Handle image attachment if present
-    if (data.attachment && data.attachmentType && data.attachmentName) {
+    if (data.attachment && data.attachmentType) {
       // Convert Base64 string to Buffer
       const attachmentBuffer = Buffer.from(data.attachment, 'base64');
       messageEntity.attachment = attachmentBuffer;
       messageEntity.attachmentType = data.attachmentType;
-      messageEntity.attachmentName = data.attachmentName;
       console.log(`Attachment found: Type ${data.attachmentType}, Size: ${attachmentBuffer.length} bytes`);
     }
 
@@ -195,7 +194,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       fromUser: client.data.user.username,
       attachment: data.attachment,
       attachmentType: data.attachmentType,
-      attachmentName: data.attachmentName,
     });
     console.log(`Direct message sent to client ${toClient.clientId} user ${data.toUser}`);
 
@@ -276,7 +274,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         timestamp: new Date(),
         attachment: data.attachment,
         attachmentType: data.attachmentType,
-        attachmentName: data.attachmentName,
       };
 
       // save message to database
@@ -287,12 +284,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       };
 
       // Handle image attachment if present
-      if (data.attachment && data.attachmentType && data.attachmentName) {
+      if (data.attachment && data.attachmentType) {
         // Convert Base64 string to Buffer
         const attachmentBuffer = Buffer.from(data.attachment, 'base64');
         messageEntity.attachment = attachmentBuffer;
         messageEntity.attachmentType = data.attachmentType;
-        messageEntity.attachmentName = data.attachmentName;
         console.log(`Attachment found: Type ${data.attachmentType}, Size: ${attachmentBuffer.length} bytes`);
       }
 

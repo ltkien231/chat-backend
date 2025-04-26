@@ -27,10 +27,6 @@ export class DirectMessageEntity {
   @Column({ type: 'varchar', name: 'attachment_type' })
   attachmentType: string;
 
-  @ApiProperty({ example: 'dog.png', description: 'The name of the attachment' })
-  @Column({ type: 'nvarchar', name: 'attachment_name' })
-  attachmentName: string;
-
   @ApiProperty({ example: '2021-01-01', description: 'The creation date of the message' })
   @Column({ name: 'created_at' })
   createdAt: Date;
