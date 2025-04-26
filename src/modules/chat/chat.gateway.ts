@@ -114,6 +114,19 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   handleDisconnect(client: Socket) {
+    // Remove client from all rooms it joined
+    const rooms = Object.keys(client.rooms || {});
+    if (rooms.length > 0) {
+      console.log(`Removing client ${client.id} from rooms: ${JSON.stringify(rooms)}`);
+      rooms.forEach((room) => {
+        if (room !== client.id) {
+          // Skip the default room (socket ID)
+          client.leave(room);
+        }
+      });
+    }
+
+    // Remove from clients array
     this.clients = this.clients.filter((c) => c.clientId !== client.id);
     console.log(`Client disconnected: ${client.id}. Remaining connected clients: ${this.clients.length}`);
   }
