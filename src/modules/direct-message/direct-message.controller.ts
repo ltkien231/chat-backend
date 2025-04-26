@@ -25,7 +25,7 @@ export class DirectMessageController {
       userId,
       otherUserId,
       page ?? 1,
-      limit ?? 100,
+      limit ?? 1000,
     );
     return messages;
   }

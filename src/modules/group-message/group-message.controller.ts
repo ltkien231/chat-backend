@@ -20,7 +20,7 @@ export class GroupMessageController {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
-    const messages = await this.service.getMessagesByGroupId(req.user.id, groupId, page ?? 1, limit ?? 100);
+    const messages = await this.service.getMessagesByGroupId(req.user.id, groupId, page ?? 1, limit ?? 1000);
     return messages;
   }
 }
