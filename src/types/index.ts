@@ -17,6 +17,7 @@ export interface DirectMessage {
   content: string;
   attachment?: string; // Base64 encoded image data
   attachmentType?: string; // MIME type of the attachment (e.g., 'image/png', 'image/jpeg')
+  attachmentName?: string;
 }
 
 export interface GroupMessage {
@@ -24,6 +25,7 @@ export interface GroupMessage {
   content: string;
   attachment?: string; // Base64 encoded image data
   attachmentType?: string; // MIME type of the attachment (e.g., 'image/png', 'image/jpeg')
+  attachmentName?: string;
 }
 
 export interface SearchUserQuery {
