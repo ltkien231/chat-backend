@@ -182,6 +182,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       attachment: data.attachment,
       attachmentType: data.attachmentType,
     });
+    console.log(`Direct message sent to client ${toClient.clientId} user ${data.toUser}`);
 
     // Confirm message was sent
     client.emit('messageSent', {
