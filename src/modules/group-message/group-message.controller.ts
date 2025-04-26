@@ -1,6 +1,6 @@
 import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { GroupMessageService } from './group-message.service';
 
 @UseGuards(JwtAuthGuard)
@@ -11,8 +11,16 @@ export class GroupMessageController {
 
   @Get('')
   @ApiOperation({ summary: 'Get group messages' })
-  async getGroupMessages(@Req() req, @Query('group') groupId: number) {
-    const messages = await this.service.getMessagesByGroupId(req.user.id, groupId);
+  @ApiQuery({ name: 'group', required: true, description: 'Group ID to get messages from' })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number for pagination' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Number of messages per page' })
+  async getGroupMessages(
+    @Req() req,
+    @Query('group') groupId: number,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    const messages = await this.service.getMessagesByGroupId(req.user.id, groupId, page ?? 1, limit ?? 10);
     return messages;
   }
 }

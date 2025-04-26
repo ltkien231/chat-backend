@@ -14,7 +14,12 @@ export class DirectMessageService {
     return this.directMessageRepo.save(message);
   }
 
-  async getMessagesBetweenUsers(userA: number, userB: number): Promise<DirectMessageEntity[]> {
+  async getMessagesBetweenUsers(
+    userA: number,
+    userB: number,
+    page: number,
+    limit: number,
+  ): Promise<DirectMessageEntity[]> {
     return this.directMessageRepo
       .createQueryBuilder('dm')
       .where('(dm.from_user = :userA AND dm.to_user = :userB) OR (dm.from_user = :userB AND dm.to_user = :userA)', {
@@ -22,6 +27,8 @@ export class DirectMessageService {
         userB,
       })
       .orderBy('dm.created_at', 'ASC')
+      .offset((page - 1) * limit)
+      .limit(limit)
       .getMany();
   }
 }
