@@ -26,7 +26,7 @@ export class DirectMessageService {
         userA,
         userB,
       })
-      .orderBy('dm.created_at', 'ASC')
+      .orderBy('dm.created_at', 'DESC')
       .offset((page - 1) * limit)
       .limit(limit)
       .getMany();

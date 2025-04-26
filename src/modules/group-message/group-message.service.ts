@@ -30,7 +30,7 @@ export class GroupMessageService {
     }
     return this.repo.find({
       where: { groupId },
-      order: { createdAt: 'ASC' },
+      order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
     });
