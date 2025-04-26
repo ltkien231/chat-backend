@@ -28,11 +28,13 @@ export class GroupMessageService {
     if (!groupUser) {
       throw new BadRequestException('User is not a member of the group');
     }
-    return this.repo.find({
+    const msgs = await this.repo.find({
       where: { groupId },
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
     });
+
+    return msgs.sort((a, b) => (a.createdAt > b.createdAt ? 1 : -1));
   }
 }
